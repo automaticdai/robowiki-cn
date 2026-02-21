@@ -81,6 +81,139 @@ Unreal Engine在自动驾驶仿真领域应用广泛，除AirSim外还有多个�
 - 对硬件要求较高，需要较强的GPU支持
 - 与ROS的集成不如Gazebo、Webots等原生支持
 
+## AirSim / Cosys-AirSim
+
+AirSim（Aerial Informatics and Robotics Simulation）是微软研究院基于 Unreal Engine 开发的开源机器人仿真平台，专为无人机（UAV）和自动驾驶车辆设计。2023年微软停止官方维护后，社区版 **Cosys-AirSim** 继续活跃开发。
+
+### 特点
+
+- **物理真实感**：基于 Unreal Engine 的 Chaos Physics，提供精确的飞行动力学仿真
+- **传感器仿真**：RGB/深度/语义分割相机、激光雷达、IMU、气压计、GPS
+- **多环境支持**：城市、森林、冬季等多套场景包（Environments）
+- **ROS 2 集成**：通过 AirSim ROS2 Wrapper 桥接
+
+### Python API
+
+```python
+import airsim
+import numpy as np
+
+# 连接到 AirSim 仿真器
+client = airsim.MultirotorClient()
+client.confirmConnection()
+client.enableApiControl(True)
+client.armDisarm(True)
+
+# 起飞
+client.takeoffAsync().join()
+
+# 移动到指定位置（北-东-下坐标系，单位米）
+client.moveToPositionAsync(10, 0, -5, velocity=5).join()
+
+# 获取多模态传感器数据
+responses = client.simGetImages([
+    airsim.ImageRequest("front_center", airsim.ImageType.Scene),       # RGB
+    airsim.ImageRequest("front_center", airsim.ImageType.DepthPlanar), # 深度图
+    airsim.ImageRequest("front_center", airsim.ImageType.Segmentation),# 语义分割
+])
+
+# 获取激光雷达点云
+lidar_data = client.getLidarData(lidar_name="LidarSensor1")
+points = np.array(lidar_data.point_cloud, dtype=np.float32).reshape(-1, 3)
+
+# 获取 IMU 数据
+imu_data = client.getImuData()
+print(f"角速度: {imu_data.angular_velocity}")
+print(f"线加速度: {imu_data.linear_acceleration}")
+
+# 降落并断开连接
+client.landAsync().join()
+client.armDisarm(False)
+client.enableApiControl(False)
+```
+
+### 与 ROS 2 集成
+
+```bash
+# 安装 AirSim ROS 2 Wrapper
+cd ~/ros2_ws/src
+git clone https://github.com/microsoft/AirSim-ROS2-Wrapper.git
+cd .. && colcon build
+
+# 启动桥接节点
+ros2 launch airsim_ros_pkgs airsim_node.launch.py
+```
+
+主要发布的话题：
+
+| 话题 | 消息类型 | 内容 |
+|------|---------|------|
+| `/airsim_node/drone_1/imu/imu` | `sensor_msgs/Imu` | IMU 数据 |
+| `/airsim_node/drone_1/front_center/Scene` | `sensor_msgs/Image` | RGB 图像 |
+| `/airsim_node/drone_1/lidar/LidarSensor1` | `sensor_msgs/PointCloud2` | 点云 |
+| `/airsim_node/drone_1/odom_local_ned` | `nav_msgs/Odometry` | 里程计 |
+
+## rclUE：ROS 2 原生集成插件
+
+rclUE 是专为 Unreal Engine 设计的 ROS 2 原生客户端库插件（C++），无需外部桥接即可在 UE 蓝图和 C++ 中直接使用 ROS 2 API：
+
+```cpp
+// UE C++ 中直接发布 ROS 2 话题
+#include "ROS2Publisher.h"
+#include "Msgs/ROS2TwistMsg.h"
+
+// 在 Actor 中创建发布者
+UROS2Publisher* Publisher;
+
+void AMyRobot::BeginPlay()
+{
+    Publisher = NewObject<UROS2Publisher>(this);
+    Publisher->SetMessageType(UROS2TwistMsg::StaticClass());
+    Publisher->SetTopicName(TEXT("/cmd_vel"));
+    Publisher->Init();
+}
+
+// 发布速度命令
+void AMyRobot::PublishVelocity(float LinearX, float AngularZ)
+{
+    UROS2TwistMsg* Msg = NewObject<UROS2TwistMsg>();
+    Msg->SetLinearX(LinearX);
+    Msg->SetAngularZ(AngularZ);
+    Publisher->Publish(Msg);
+}
+```
+
+## 高保真传感器仿真
+
+Unreal Engine 的光线追踪（Ray Tracing）能力使其在高保真传感器仿真方面具有独特优势：
+
+### 激光雷达仿真
+
+UE 可通过光线投射（Raycast）精确模拟固态激光雷达和机械旋转激光雷达的测量原理：
+
+- **多回波（Multiple Returns）**：模拟激光束穿透玻璃或植被时的多次返回
+- **强度仿真（Intensity Simulation）**：根据材质反射率计算回波强度
+- **大气效应**：模拟雨、雾对激光的散射效应
+
+### 相机仿真
+
+- **镜头畸变**：精确的径向和切向畸变模型
+- **运动模糊**：物理正确的快门速度和运动模糊效果
+- **HDR 与曝光**：自动曝光和 HDR 渲染，接近真实相机响应曲线
+- **噪声模型**：Gaussian 噪声、热噪声和泊松噪声仿真
+
+## NVIDIA Omniverse 与 Isaac Sim 的对比
+
+| 特性 | Unreal Engine + AirSim | NVIDIA Isaac Sim |
+|------|------------------------|-----------------|
+| 渲染质量 | 极高（Lumen + Nanite） | 高（RTX 光线追踪） |
+| 物理引擎 | Chaos Physics | PhysX 5 |
+| ROS 2 支持 | 通过 rclUE / AirSim | 原生支持 |
+| GPU 并行仿真 | 有限 | 支持（Warp） |
+| 主要应用 | 无人机、自动驾驶 | 工业机器人、操作任务 |
+| 许可证 | 商业授权（含免费版） | 商业授权（含免费版） |
+| 学习曲线 | 较陡（需 UE 知识） | 中等 |
+
 ## 参考资料
 
 - [Unreal Engine官方文档](https://docs.unrealengine.com/)
@@ -88,3 +221,6 @@ Unreal Engine在自动驾驶仿真领域应用广泛，除AirSim外还有多个�
 - [CARLA仿真器](https://carla.org/)
 - Shah, S., Dey, D., Lovett, C., & Kapoor, A. (2018). AirSim: High-fidelity visual and physical simulation for autonomous vehicles. *Field and Service Robotics*.
 - Dosovitskiy, A., Ros, G., Codevilla, F., Lopez, A., & Koltun, V. (2017). CARLA: An open urban driving simulator. *Conference on Robot Learning*.
+- [Cosys-AirSim GitHub](https://github.com/Cosys-Lab/Cosys-AirSim)
+- [rclUE GitHub](https://github.com/rapyuta-robotics/rclUE)
+- Shah, S., et al. (2018). AirSim: High-Fidelity Visual and Physical Simulation for Autonomous Vehicles. *FSR*.

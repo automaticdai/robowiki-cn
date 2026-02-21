@@ -106,9 +106,217 @@ Webots在机器人教育领域具有显著优势：
 - 渲染质量与游戏引擎相比仍有差距
 - 社区规模和生态资源不及Gazebo
 
+## 世界编辑器（World Editor）
+
+Webots 的图形界面提供了直观的场景树编辑器（Scene Tree Editor），可以拖放方式构建仿真场景：
+
+- **WorldInfo 节点**：设置物理参数（重力、时间步长）、坐标系和随机种子
+- **Viewpoint 节点**：配置初始摄像机视角
+- **Light 节点**：添加方向光（DirectionalLight）、点光源（PointLight）、聚光灯（SpotLight）
+- **DEF/USE 机制**：定义可复用的节点，减少场景文件冗余
+- **Proto 机制**：将复杂场景节点封装为参数化原型，类似统一机器人描述格式（URDF, Unified Robot Description Format）的 xacro
+
+场景文件以 `.wbt` 格式保存，本质上是一种基于节点树的文本格式，可以手动编辑。原型文件以 `.proto` 格式保存，允许用户定义带参数的可复用组件。例如，一个自定义轮式机器人 Proto 可以暴露轮距、轮径等参数，方便在不同场景中复用。
+
+## Python 控制器编写
+
+Webots 支持 Python、C、C++、Java、ROS、MATLAB 等多种控制器语言。以下是 Python 控制器示例：
+
+### 基础控制器结构
+
+```python
+from controller import Robot, Motor, DistanceSensor
+
+# 获取机器人实例
+robot = Robot()
+timestep = int(robot.getBasicTimeStep())  # 通常 32ms 或 64ms
+
+# 获取电机设备
+left_motor = robot.getDevice('left wheel motor')
+right_motor = robot.getDevice('right wheel motor')
+left_motor.setPosition(float('inf'))   # 速度模式（无限位置）
+right_motor.setPosition(float('inf'))
+left_motor.setVelocity(0)
+right_motor.setVelocity(0)
+
+# 获取距离传感器
+ds_left = robot.getDevice('ds_left')
+ds_right = robot.getDevice('ds_right')
+ds_left.enable(timestep)
+ds_right.enable(timestep)
+
+MAX_SPEED = 6.28  # 弧度/秒
+
+# 主控制循环
+while robot.step(timestep) != -1:
+    # 读取传感器
+    left_dist = ds_left.getValue()
+    right_dist = ds_right.getValue()
+
+    # 简单避障控制
+    left_speed = MAX_SPEED
+    right_speed = MAX_SPEED
+
+    if left_dist < 1000:   # 左侧有障碍
+        left_speed = -MAX_SPEED
+    if right_dist < 1000:  # 右侧有障碍
+        right_speed = -MAX_SPEED
+
+    left_motor.setVelocity(left_speed)
+    right_motor.setVelocity(right_speed)
+```
+
+### 常用传感器 API
+
+```python
+from controller import Camera, Lidar, InertialUnit, GPS
+
+# 相机
+camera = robot.getDevice('camera')
+camera.enable(timestep)
+image = camera.getImage()  # 返回 BGRA 字节串
+width, height = camera.getWidth(), camera.getHeight()
+
+# 激光雷达
+lidar = robot.getDevice('lidar')
+lidar.enable(timestep)
+lidar.enablePointCloud()
+ranges = lidar.getRangeImage()     # 距离数组
+point_cloud = lidar.getPointCloud()  # 三维点云
+
+# 惯性测量单元（IMU, Inertial Measurement Unit）
+imu = robot.getDevice('inertial unit')
+imu.enable(timestep)
+roll, pitch, yaw = imu.getRollPitchYaw()
+
+# 全球定位系统（GPS, Global Positioning System）
+gps = robot.getDevice('gps')
+gps.enable(timestep)
+x, y, z = gps.getValues()
+
+# 编码器（位置传感器）
+encoder = robot.getDevice('left wheel sensor')
+encoder.enable(timestep)
+position = encoder.getValue()  # 弧度
+```
+
+### 机器人运动学控制（机械臂示例）
+
+```python
+from controller import Robot, Motor, PositionSensor
+
+robot = Robot()
+timestep = int(robot.getBasicTimeStep())
+
+# 获取 UR5e 的 6 个关节
+joint_names = ['shoulder_pan', 'shoulder_lift', 'elbow',
+               'wrist_1', 'wrist_2', 'wrist_3']
+motors = [robot.getDevice(f'{name}_joint') for name in joint_names]
+sensors = [robot.getDevice(f'{name}_joint_sensor') for name in joint_names]
+
+for s in sensors:
+    s.enable(timestep)
+
+# 设置目标关节角度（弧度）
+target_angles = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+for motor, angle in zip(motors, target_angles):
+    motor.setPosition(angle)
+
+while robot.step(timestep) != -1:
+    current = [s.getValue() for s in sensors]
+    # 检查是否到达目标
+    error = max(abs(c - t) for c, t in zip(current, target_angles))
+    if error < 0.01:
+        print("已到达目标位置")
+        break
+```
+
+## 与 ROS 2 集成（webots_ros2）
+
+`webots_ros2` 是 Webots 官方提供的 ROS 2 集成包，将 Webots 设备自动映射为 ROS 2 话题和服务。
+
+### 安装
+
+```bash
+sudo apt install ros-humble-webots-ros2
+```
+
+### 启动配置
+
+```python
+# launch/robot.launch.py
+import os
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch_ros.actions import Node
+from webots_ros2_driver.webots_launcher import WebotsLauncher
+from ament_index_python.packages import get_package_share_directory
+
+def generate_launch_description():
+    pkg_dir = get_package_share_directory('my_robot_pkg')
+
+    webots = WebotsLauncher(
+        world=os.path.join(pkg_dir, 'worlds', 'my_world.wbt')
+    )
+
+    robot_driver = Node(
+        package='webots_ros2_driver',
+        executable='driver',
+        output='screen',
+        parameters=[{
+            'robot_description': open(os.path.join(pkg_dir, 'resource', 'robot.urdf')).read()
+        }],
+    )
+
+    return LaunchDescription([webots, robot_driver])
+```
+
+### 话题映射示例
+
+| Webots 设备 | ROS 2 话题 | 消息类型 |
+|------------|-----------|---------|
+| Camera | `/camera/image_color` | `sensor_msgs/Image` |
+| Lidar | `/scan` | `sensor_msgs/LaserScan` |
+| InertialUnit | `/imu` | `sensor_msgs/Imu` |
+| GPS | `/gps` | `sensor_msgs/NavSatFix` |
+| DifferentialWheels | `/cmd_vel` 订阅 | `geometry_msgs/Twist` |
+
+## 多机器人场景
+
+Webots 原生支持在同一场景中运行多个机器人，每个机器人有独立的控制器进程：
+
+```python
+# 多机器人场景：通过机器人名称区分
+robot = Robot()
+robot_name = robot.getName()  # 例如 "robot_1", "robot_2"
+
+# 根据名称设置不同初始位置或策略
+if robot_name == "robot_1":
+    target = [1.0, 0.0, 0.0]
+elif robot_name == "robot_2":
+    target = [-1.0, 0.0, 0.0]
+```
+
+在 ROS 2 场景下，多机器人通过命名空间（Namespace）区分话题：
+
+- `/robot_1/scan`、`/robot_1/cmd_vel`
+- `/robot_2/scan`、`/robot_2/cmd_vel`
+
+## 与教育和竞赛的结合
+
+Webots 在机器人竞赛和教育领域有广泛应用：
+
+- **RoboCup**：官方提供基于 Webots 的标准平台组（Standard Platform League）仿真环境
+- **世界机器人奥林匹克（WRO, World Robot Olympiad）**：部分赛项使用 Webots 仿真预赛
+- **Cyberbotics 官方教程**：提供从入门到高级的系统教程，涵盖感知、运动规划和强化学习
+- **用于教学的预置环境**：内置 e-puck 教学机器人和标准任务（迷宫探索、避障、线跟踪）
+
 ## 参考资料
 
 - [Webots官方文档](https://cyberbotics.com/doc/guide/index)
 - [Webots GitHub仓库](https://github.com/cyberbotics/webots)
 - [webots_ros2文档](https://github.com/cyberbotics/webots_ros2)
 - Michel, O. (2004). Webots: Professional mobile robot simulation. *International Journal of Advanced Robotic Systems*, 1(1), 39-42.
+- [Webots 官方文档](https://cyberbotics.com/doc/guide/index)
+- [webots_ros2 GitHub](https://github.com/cyberbotics/webots_ros2)
+- Michel, O. (2004). WebotsTM: Professional Mobile Robot Simulation. *Journal of Advanced Robotics Systems*.

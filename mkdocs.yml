@@ -32,8 +32,10 @@ nav:
       - control/modelling/modelling.md
       - control/modelling/state-space.md
       - control/pid/pid.md
+      - control/lqr/lqr.md
       - control/mpc/mpc.md
       - control/nn/nn.md
+      - control/adaptive/adaptive.md
     - 感知:
       - sensing/index.md
       - sensing/sensors.md
@@ -100,6 +102,9 @@ nav:
           - database/digit.md
           - database/unitree-h1.md
           - database/spot.md
+          - database/pepper.md
+          - database/apollo.md
+          - database/walker-s.md
       - 机器人企业:
           - database/companies.md
           - database/boston-dynamics.md
