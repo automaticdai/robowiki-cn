@@ -30,8 +30,12 @@ nav:
       - contributors.md
     - 控制: 
       - control/index.md
-      - control/modelling/modelling.md
-      - control/modelling/state-space.md
+      - 建模:
+        - control/modelling/modelling.md
+        - control/modelling/modelling-foundations.md
+        - control/modelling/modelling-discrete-identification.md
+        - control/modelling/state-space.md
+        - control/modelling/modelling-full-reference.md
       - control/pid/pid.md
       - control/lqr/lqr.md
       - control/mpc/mpc.md
@@ -41,30 +45,68 @@ nav:
       - sensing/index.md
       - sensing/sensors.md
       - sensing/depth-camera.md
-      - sensing/sensor-fusion.md
-      - sensing/slam.md
+      - 传感器融合:
+        - sensing/sensor-fusion.md
+        - sensing/sensor-fusion-architecture.md
+        - sensing/sensor-fusion-engineering.md
+        - sensing/sensor-fusion-full-reference.md
+      - SLAM:
+        - sensing/slam.md
+        - sensing/slam-systems-comparison.md
+        - sensing/slam-engineering-playbook.md
     - 视觉:
       - cv/index.md
-      - cv/object-detection.md
+      - 目标检测:
+        - cv/object-detection.md
+        - cv/object-detection-practical.md
+        - cv/object-detection-3d-advanced.md
       - cv/segmentation.md
       - cv/tracking.md
       - cv/pose-estimation.md
-      - cv/3d-vision.md
+      - 三维视觉:
+        - cv/3d-vision.md
+        - cv/3d-vision-stereo-depth.md
+        - cv/3d-vision-pointcloud-registration.md
+        - cv/3d-vision-reconstruction-radiance.md
+        - cv/3d-vision-full-reference.md
     - 规划:
       - planning/index.md
       - planning/decisionmaking.md
       - planning/pathplanning.md
       - planning/motionplanning.md
+      - planning/behavior-trees.md
+      - planning/multi-robot-task-allocation.md
+      - planning/replanning-safety.md
     - 学习:
       - learning/ml.md
-      - learning/rl.md
-      - learning/dl.md
+      - 强化学习:
+        - learning/rl.md
+        - learning/rl-algorithms-practice.md
+        - learning/rl-robotics-deployment.md
+        - learning/rl-advanced-paradigms.md
+        - learning/rl-full-reference.md
+      - 深度学习:
+        - learning/dl.md
+        - learning/dl-foundation-models.md
+        - learning/dl-training-deployment.md
+        - learning/dl-robotics-pipelines.md
+        - learning/dl-full-reference.md
     - 仿真:
       - simulation/index.md
       - simulation/gazebo.md
-      - simulation/vrep.md
+      - CoppeliaSim:
+        - simulation/vrep.md
+        - simulation/vrep-remote-api-ros2.md
+        - simulation/vrep-robotics-workflows.md
+        - simulation/vrep-performance-debugging.md
+        - simulation/vrep-full-reference.md
       - simulation/mujoco.md
-      - simulation/pybullet.md
+      - PyBullet:
+        - simulation/pybullet.md
+        - simulation/pybullet-control-dynamics.md
+        - simulation/pybullet-rl-workflows.md
+        - simulation/pybullet-vision-multirobot.md
+        - simulation/pybullet-full-reference.md
       - simulation/webots.md
       - simulation/robotics-toolbox.md
       - simulation/stage.md
@@ -73,20 +115,37 @@ nav:
       - simulation/nvidiaomniverse.md
     - ROS:
       - ros/index.md
-      - ros/ros1.md
-      - ros/ros2.md
+      - ROS 1:
+        - ros/ros1.md
+        - ros/ros1-workspace.md
+        - ros/ros1-communication.md
+        - ros/ros1-full-reference.md
+      - ROS 2:
+        - ros/ros2.md
+        - ros/ros2-qos-dds.md
+        - ros/ros2-migration-playbook.md
+        - ros/ros2-full-reference.md
     - Linux:
       - linux/index.md
       - linux/commands.md
-      - linux/shell-scripting.md
+      - Shell 脚本:
+        - linux/shell-scripting.md
+        - linux/shell-scripting-automation-patterns.md
+        - linux/shell-scripting-ops-toolkit.md
+        - linux/shell-scripting-full-reference.md
     - RTOS:
       - rtos/index.md
       - rtos/freertos.md
       - rtos/ucos.md
       - rtos/vxworks.md
       - rtos/qnx.md
+      - rtos/scheduling-analysis.md
+      - rtos/latency-debugging.md
     - 硬件:
       - hardware/index.md
+      - hardware/system-architecture.md
+      - hardware/power-thermal.md
+      - hardware/communication-buses.md
       - arduino/index.md
       - raspberrypi/index.md
       - jetson/index.md
@@ -111,7 +170,14 @@ nav:
           - database/boston-dynamics.md
       - 机器人实验室:
           - database/labs.md
-          - database/labs-cn.md
+          - database/labs-global-map.md
+          - database/labs-evaluation-collaboration.md
+          - database/labs-full-reference.md
+          - 中国实验室专题:
+              - database/labs-cn.md
+              - database/labs-cn-universities.md
+              - database/labs-cn-cas-enterprise.md
+              - database/labs-cn-full-reference.md
       - database/conferences.md
       - database/standard.md
       - database/competitions.md
