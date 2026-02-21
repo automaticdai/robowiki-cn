@@ -14,9 +14,10 @@ docs_dir: docs
 site_dir: site
 
 # Google Analytics
-google_analytics:
-  - G-PJC5MCXWKL
-  - auto
+extra:
+  analytics:
+    provider: google
+    property: G-PJC5MCXWKL
 
 # Navigation
 nav:
@@ -32,16 +33,23 @@ nav:
       - control/modelling/modelling.md
       - control/modelling/state-space.md
       - control/pid/pid.md
+      - control/lqr/lqr.md
       - control/mpc/mpc.md
       - control/nn/nn.md
+      - control/adaptive/adaptive.md
     - 感知:
       - sensing/index.md
       - sensing/sensors.md
       - sensing/depth-camera.md
+      - sensing/sensor-fusion.md
       - sensing/slam.md
     - 视觉:
       - cv/index.md
       - cv/object-detection.md
+      - cv/segmentation.md
+      - cv/tracking.md
+      - cv/pose-estimation.md
+      - cv/3d-vision.md
     - 规划:
       - planning/index.md
       - planning/decisionmaking.md
@@ -50,6 +58,7 @@ nav:
     - 学习:
       - learning/ml.md
       - learning/rl.md
+      - learning/dl.md
     - 仿真:
       - simulation/index.md
       - simulation/gazebo.md
@@ -69,6 +78,7 @@ nav:
     - Linux:
       - linux/index.md
       - linux/commands.md
+      - linux/shell-scripting.md
     - RTOS:
       - rtos/index.md
       - rtos/freertos.md
@@ -92,6 +102,10 @@ nav:
           - database/asimo.md
           - database/digit.md
           - database/unitree-h1.md
+          - database/spot.md
+          - database/pepper.md
+          - database/apollo.md
+          - database/walker-s.md
       - 机器人企业:
           - database/companies.md
           - database/boston-dynamics.md
