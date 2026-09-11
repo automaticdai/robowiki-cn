@@ -234,6 +234,128 @@ class RLPolicyNode(Node):
 4. ROS 2 节点接收 RGBD 图像，输出末端执行器位姿
 
 
+## Isaac Lab 机器人训练示例
+
+NVIDIA Isaac Lab 是专为大规模机器人强化学习设计的 GPU 加速仿真框架，支持数千个并行环境同步运行，大幅缩短训练时间。
+
+### 环境类结构
+
+Isaac Lab 中的任务环境继承自 `DirectRLEnv` 或 `ManagerBasedRLEnv`，需要实现以下核心方法：
+
+```python
+from isaaclab.envs import DirectRLEnv, DirectRLEnvCfg
+import torch
+
+class HumanoidLocomotionEnv(DirectRLEnv):
+    cfg: DirectRLEnvCfg
+
+    def __init__(self, cfg, render_mode=None, **kwargs):
+        super().__init__(cfg, render_mode, **kwargs)
+        # 初始化关节目标、奖励缓冲区等
+        self._joint_dof_idx, _ = self.robot.find_joints(".*")
+        self.action_scale = 0.5
+
+    def _get_observations(self) -> dict:
+        # 收集观测：关节位置、速度、基座姿态、IMU数据
+        obs = torch.cat([
+            self.robot.data.joint_pos[:, self._joint_dof_idx],      # 关节位置
+            self.robot.data.joint_vel[:, self._joint_dof_idx],      # 关节速度
+            self.robot.data.root_lin_vel_b,                          # 基座线速度（机体系）
+            self.robot.data.root_ang_vel_b,                          # 基座角速度
+            self.robot.data.projected_gravity_b,                     # 投影重力方向
+            self.commands[:, :3],                                    # 速度指令
+        ], dim=-1)
+        return {"policy": obs}
+
+    def _get_rewards(self) -> torch.Tensor:
+        # 组合多项奖励
+        alive_reward    = 1.0 * (~self.reset_terminated).float()
+        vel_tracking    = self._reward_velocity_tracking()
+        energy_penalty  = self._penalty_energy()
+        contact_penalty = self._penalty_contact_forces()
+        return alive_reward + vel_tracking + energy_penalty + contact_penalty
+```
+
+### 观测空间设计
+
+运动控制任务的观测通常包含以下分量：
+
+| 观测分量 | 维度 | 说明 |
+|----------|------|------|
+| 关节位置 | \(n_{dof}\) | 各关节当前角度（减去默认角度） |
+| 关节速度 | \(n_{dof}\) | 各关节角速度 |
+| 基座线速度 | 3 | 机体坐标系下的 \(v_x, v_y, v_z\) |
+| 基座角速度 | 3 | 机体坐标系下的滚转/俯仰/偏航角速度 |
+| 投影重力 | 3 | 重力向量在机体系的投影，隐式编码姿态 |
+| 速度指令 | 3 | 目标前向速度、侧向速度、偏航速率 |
+| 上一步动作 | \(n_{dof}\) | 提供动作历史信息，有助于平滑控制 |
+
+### 奖励函数定义
+
+```python
+def _reward_velocity_tracking(self) -> torch.Tensor:
+    # 跟踪目标线速度：使用指数核函数
+    lin_vel_error = torch.sum(
+        (self.commands[:, :2] - self.robot.data.root_lin_vel_b[:, :2]) ** 2, dim=1
+    )
+    return torch.exp(-lin_vel_error / 0.25) * 1.0
+
+def _penalty_energy(self) -> torch.Tensor:
+    # 能量惩罚：抑制关节扭矩过大
+    return -torch.sum(
+        torch.abs(self.robot.data.applied_torque[:, self._joint_dof_idx]), dim=1
+    ) * 0.0002
+
+def _penalty_contact_forces(self) -> torch.Tensor:
+    # 碰撞惩罚：防止非预期肢体接触地面
+    net_contact = torch.norm(
+        self.contact_sensor.data.net_forces_w[:, self.undesired_contact_body_ids, :], dim=-1
+    )
+    return -torch.sum((net_contact > 1.0).float(), dim=1) * 0.1
+```
+
+### 域随机化参数
+
+域随机化 (Domain Randomization) 是 Sim-to-Real 迁移的关键，Isaac Lab 通过配置类统一管理：
+
+```python
+from isaaclab.utils.noise import AdditiveGaussianNoiseCfg, UniformNoiseCfg
+
+randomization_cfg = dict(
+    # 物理参数随机化
+    physics_material=dict(
+        static_friction=(0.6, 1.2),
+        dynamic_friction=(0.4, 0.9),
+        restitution=(0.0, 0.1),
+    ),
+    # 关节参数随机化
+    joint_stiffness=(0.8, 1.2),   # 相对额定值的倍率范围
+    joint_damping=(0.8, 1.2),
+    # 观测噪声
+    obs_noise=AdditiveGaussianNoiseCfg(mean=0.0, std=0.02),
+    # 外力扰动
+    push_robot=dict(interval_s=5.0, magnitude=(0.0, 1.0)),
+)
+```
+
+### 训练启动与真机部署
+
+```bash
+# 在 Isaac Lab 根目录下启动训练（4096 并行环境）
+python scripts/reinforcement_learning/rsl_rl/train.py \
+    --task=Isaac-Velocity-Rough-Anymal-C-v0 \
+    --num_envs=4096 \
+    --headless
+
+# 导出策略为 ONNX 格式用于真机推理
+python scripts/reinforcement_learning/rsl_rl/export_onnx.py \
+    --task=Isaac-Velocity-Rough-Anymal-C-v0 \
+    --checkpoint=logs/rsl_rl/anymal_c_rough/model_5000.pt
+```
+
+训练完成后，将导出的 ONNX 模型部署到机器人的实时控制器上，通常以 400–1000 Hz 的频率运行策略推理。
+
+
 ## 参考资料
 
 - Tobin J, et al. Domain Randomization for Transferring Deep Neural Networks from Simulation to the Real World. *IROS*, 2017.

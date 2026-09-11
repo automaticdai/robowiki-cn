@@ -45,6 +45,7 @@ nav:
         - control/modelling/modelling-foundations.md
         - control/modelling/modelling-discrete-identification.md
         - control/modelling/state-space.md
+        - control/modelling/modelling-examples.md
         - control/modelling/modelling-full-reference.md
       - control/pid/pid.md
       - control/lqr/lqr.md
@@ -61,6 +62,7 @@ nav:
       - sensing/imu-calibration.md
       - 传感器融合:
         - sensing/sensor-fusion.md
+        - sensing/sensor-fusion-filters.md
         - sensing/sensor-fusion-architecture.md
         - sensing/sensor-fusion-engineering.md
         - sensing/sensor-fusion-full-reference.md
@@ -126,6 +128,7 @@ nav:
         - simulation/vrep.md
         - simulation/vrep-remote-api-ros2.md
         - simulation/vrep-robotics-workflows.md
+        - simulation/vrep-scripting-rl.md
         - simulation/vrep-performance-debugging.md
         - simulation/vrep-full-reference.md
       - simulation/mujoco.md
@@ -147,10 +150,17 @@ nav:
         - ros/ros1.md
         - ros/ros1-workspace.md
         - ros/ros1-communication.md
+        - ros/ros1-node-programming.md
+        - ros/ros1-tf-launch-bag.md
+        - ros/ros1-urdf.md
+        - ros/ros1-navigation.md
         - ros/ros1-full-reference.md
       - ROS 2:
         - ros/ros2.md
         - ros/ros2-qos-dds.md
+        - ros/ros2-node-programming.md
+        - ros/ros2-actions-components.md
+        - ros/ros2-nav2-microros.md
         - ros/ros2-migration-playbook.md
         - ros/ros2-full-reference.md
     - Linux:
@@ -158,6 +168,7 @@ nav:
       - linux/commands.md
       - Shell 脚本:
         - linux/shell-scripting.md
+        - linux/shell-scripting-robot-startup.md
         - linux/shell-scripting-automation-patterns.md
         - linux/shell-scripting-ops-toolkit.md
         - linux/shell-scripting-full-reference.md
@@ -216,6 +227,9 @@ nav:
               - database/boston-dynamics-spot-applications.md
       - 机器人实验室:
           - database/labs.md
+          - database/labs-north-america.md
+          - database/labs-europe.md
+          - database/labs-asia.md
           - database/labs-global-map.md
           - database/labs-evaluation-collaboration.md
           - database/labs-full-reference.md
