@@ -45,11 +45,15 @@ nav:
         - control/modelling/modelling-foundations.md
         - control/modelling/modelling-discrete-identification.md
         - control/modelling/state-space.md
+        - control/modelling/modelling-examples.md
         - control/modelling/modelling-full-reference.md
       - control/pid/pid.md
       - control/lqr/lqr.md
       - control/mpc/mpc.md
-      - control/nn/nn.md
+      - 神经网络控制:
+        - control/nn/nn.md
+        - control/nn/nn-physics-informed.md
+        - control/nn/nn-policy-learning.md
       - control/adaptive/adaptive.md
     - 感知:
       - sensing/index.md
@@ -58,6 +62,7 @@ nav:
       - sensing/imu-calibration.md
       - 传感器融合:
         - sensing/sensor-fusion.md
+        - sensing/sensor-fusion-filters.md
         - sensing/sensor-fusion-architecture.md
         - sensing/sensor-fusion-engineering.md
         - sensing/sensor-fusion-full-reference.md
@@ -123,6 +128,7 @@ nav:
         - simulation/vrep.md
         - simulation/vrep-remote-api-ros2.md
         - simulation/vrep-robotics-workflows.md
+        - simulation/vrep-scripting-rl.md
         - simulation/vrep-performance-debugging.md
         - simulation/vrep-full-reference.md
       - simulation/mujoco.md
@@ -144,10 +150,17 @@ nav:
         - ros/ros1.md
         - ros/ros1-workspace.md
         - ros/ros1-communication.md
+        - ros/ros1-node-programming.md
+        - ros/ros1-tf-launch-bag.md
+        - ros/ros1-urdf.md
+        - ros/ros1-navigation.md
         - ros/ros1-full-reference.md
       - ROS 2:
         - ros/ros2.md
         - ros/ros2-qos-dds.md
+        - ros/ros2-node-programming.md
+        - ros/ros2-actions-components.md
+        - ros/ros2-nav2-microros.md
         - ros/ros2-migration-playbook.md
         - ros/ros2-full-reference.md
     - Linux:
@@ -155,6 +168,7 @@ nav:
       - linux/commands.md
       - Shell 脚本:
         - linux/shell-scripting.md
+        - linux/shell-scripting-robot-startup.md
         - linux/shell-scripting-automation-patterns.md
         - linux/shell-scripting-ops-toolkit.md
         - linux/shell-scripting-full-reference.md
@@ -183,11 +197,21 @@ nav:
       - database/index.md
       - database/dataset.md
       - 机器人图鉴:
-          - database/robots.md
+          - 机器人图鉴:
+              - database/robots.md
+              - database/robots-humanoid-legged.md
+              - database/robots-mobile-industrial.md
+              - database/robots-special-domains.md
           - database/nao.md
-          - database/atlas.md
+          - Atlas:
+              - database/atlas.md
+              - database/atlas-control-architecture.md
+              - database/atlas-electric-applications.md
           - database/optimus.md
-          - database/figure.md
+          - Figure:
+              - database/figure.md
+              - database/figure-helix-ai.md
+              - database/figure-hardware-bmw.md
           - database/asimo.md
           - database/digit.md
           - database/unitree-h1.md
@@ -197,9 +221,15 @@ nav:
           - database/walker-s.md
       - 机器人企业:
           - database/companies.md
-          - database/boston-dynamics.md
+          - Boston Dynamics:
+              - database/boston-dynamics.md
+              - database/boston-dynamics-platforms.md
+              - database/boston-dynamics-spot-applications.md
       - 机器人实验室:
           - database/labs.md
+          - database/labs-north-america.md
+          - database/labs-europe.md
+          - database/labs-asia.md
           - database/labs-global-map.md
           - database/labs-evaluation-collaboration.md
           - database/labs-full-reference.md
@@ -209,8 +239,16 @@ nav:
               - database/labs-cn-cas-enterprise.md
               - database/labs-cn-full-reference.md
       - database/conferences.md
-      - database/standard.md
-      - database/competitions.md
+      - 行业标准:
+        - database/standard.md
+        - database/standard-terminology-performance.md
+        - database/standard-safety.md
+        - database/standard-interface-humanoid.md
+      - 机器人竞赛:
+        - database/competitions.md
+        - database/competitions-robocup-darpa.md
+        - database/competitions-china.md
+        - database/competitions-international.md
     - 资源:
       - resources/index.md
       - resources/software.md
